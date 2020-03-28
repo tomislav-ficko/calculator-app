@@ -11,13 +11,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var entryField: UILabel!
     
-    var currentState: Float = 0
-    var currentString: String = "0"
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
-    }
+    var currentState: Float = 0 //Representation of the entry field, for calculation
+    var currentString: String = "0" //Representation of the entry field, for updating the entryField view
 
 
     @IBAction func deleteSwipe(_ sender: UISwipeGestureRecognizer) {
@@ -25,8 +20,22 @@ class ViewController: UIViewController {
     @IBAction func percentButton(_ sender: UIButton) {
     }
     @IBAction func posNegButton(_ sender: UIButton) {
+        currentState = -1 * currentState
+        
+        if(currentString.prefix(1) == "-") {
+            let stringLength = currentString.count
+            currentString = String(currentString.suffix(stringLength - 1)) //Removing the minus in front of the whole string
+        }
+        else {
+            currentString = "-" + currentString
+        }
+        
+        entryField.text = currentString
     }
     @IBAction func clearButton(_ sender: UIButton) {
+        currentState = 0
+        currentString = "0"
+        entryField.text = currentString
     }
     @IBAction func divideButton(_ sender: UIButton) {
     }
