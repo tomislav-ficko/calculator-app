@@ -220,7 +220,6 @@
                                     <constraint firstAttribute="trailing" secondItem="qiN-C9-pzb" secondAttribute="trailing" id="dDq-io-zTQ"/>
                                     <constraint firstAttribute="trailing" secondItem="6Zi-Nz-OFl" secondAttribute="trailing" id="el2-oV-de2"/>
                                     <constraint firstItem="snR-3R-5qp" firstAttribute="leading" secondItem="3gF-9Q-2kZ" secondAttribute="leading" id="nqS-W4-XXc"/>
-                                    <constraint firstAttribute="trailing" secondItem="gC2-i9-XzD" secondAttribute="trailing" id="z87-8W-ra4"/>
                                     <constraint firstAttribute="trailing" secondItem="gC2-i9-XzD" secondAttribute="trailing" constant="20" id="zeN-Bp-5aj"/>
                                 </constraints>
                             </stackView>
