@@ -11,12 +11,79 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var entryField: UILabel!
     
-    var result: Float = 0
     var currentEntry = "0" //Representation of the entry field, for updating the entryField view
     
     
     @IBAction func resultButton(_ sender: UIButton) {
-        //TODO calculate whole string and print result
+        var expressionElements: [String] = [] //backwards ordered, first element was last in entry field
+        var currentElement = ""
+        var lastChar = ""
+        
+        // Parsing expression
+        lastChar = String(currentEntry.suffix(1))
+        while lastChar != "" {
+            if isOperator(char: lastChar) {
+                expressionElements.append(lastChar)
+                currentEntry = deleteLastChar(string: currentEntry)
+                lastChar = getLastChar(string: currentEntry)
+                continue
+            }
+            
+            currentElement = lastChar + currentElement
+            currentEntry = deleteLastChar(string: currentEntry)
+            lastChar = getLastChar(string: currentEntry)
+            if isOperator(char: lastChar) {
+                expressionElements.append(currentElement)
+            }
+        }
+        
+        // Calculating expression
+        expressionElements = expressionElements.reversed()
+        currentEntry = calculateResult(array: expressionElements)
+        
+    }
+    func calculateResult (array: [String]) -> String {
+        for (index, element) in array.enumerated() {
+            if element == "×" || element == "÷" {
+                let num1 = Float(array[index - 1])!
+                let num2 = Float(array[index + 1])!
+                var result = calculate(firstNumber: num1, secondNumber: num2, operation: element)
+            }
+        }
+        //TODO
+        return ""
+    }
+    func calculate(firstNumber: Float, secondNumber: Float, operation: String) -> String {
+        if operation == "×" {
+            return String(firstNumber * secondNumber)
+        } else if operation == "÷" {
+            if secondNumber == Float(0) {
+                return "Cannot divide by 0!"
+            }
+            return String(firstNumber / secondNumber)
+        } else if operation == "+" {
+            return String(firstNumber + secondNumber)
+        } else {
+            return String(firstNumber - secondNumber)
+        }
+    }
+    func getLastChar(string: String) -> String {
+        return String(string.suffix(1))
+    }
+    func deleteLastChar(string: String) -> String {
+        let length = string.count
+        return String(string.prefix(length - 1))
+    }
+//    struct ParseHelper {
+//        var startingString = ""
+//        var expressionElements: [String] = []
+//
+//    }
+    func isDivisionWithZero(dividend: Float, divisor: Float) -> Bool {
+        if divisor == Float(0) {
+            return true
+        }
+        return false
     }
     @IBAction func deleteSwipe(_ sender: UISwipeGestureRecognizer) {
         deleteLastChars(numberOfChars: 1)
@@ -30,7 +97,7 @@ class ViewController: UIViewController {
         // (e.g. currentEntryDuplicate.getLastChars(1))
         var lastChar = String(currentEntryDuplicate.suffix(1))
         
-        if(!isOperator(char: lastChar)){
+        if !isOperator(char: lastChar) {
             repeat {
                 numberAsString = lastChar + numberAsString
                 
@@ -40,7 +107,7 @@ class ViewController: UIViewController {
                 currentEntryDuplicate = String(currentEntryDuplicate.prefix(length - 1))
                 
                 lastChar = String(currentEntryDuplicate.suffix(1))
-            } while (lastChar != "" && !isOperator(char: lastChar)) // Repeat until we come across an operator or to the beginning of the string
+            } while lastChar != "" && !isOperator(char: lastChar) // Repeat until we come across an operator or to the beginning of the string
             
             // At this point, the number has been removed from currentEntryDuplicate, which means that the new number can just be concatenated
             
@@ -55,7 +122,7 @@ class ViewController: UIViewController {
         }
     }
     @IBAction func posNegButton(_ sender: UIButton) {
-        if(currentEntry.prefix(1) == "-") {
+        if currentEntry.prefix(1) == "-" {
             removeMinus()
         }
         else {
@@ -64,7 +131,6 @@ class ViewController: UIViewController {
         printString()
     }
     @IBAction func clearButton(_ sender: UIButton) {
-        result = 0
         currentEntry = "0"
         printString()
     }
@@ -87,20 +153,20 @@ class ViewController: UIViewController {
     func getLastChars(numberOfChars: Int) -> String {
         return String(currentEntry.suffix(numberOfChars))
     }
-    func deleteLastChars(numberOfChars: Int) {
+    func deleteLastChars(numberOfChars: Int) { //TODO change to accept string and number of chars, return finished string
         let stringLength = currentEntry.count
         currentEntry = String(currentEntry.prefix(stringLength - numberOfChars))
     }
-    func deleteLastCharIfOperator() {
+    func deleteLastCharIfOperator() { //TODO change to accept string, return finished string
         let lastChar = String(currentEntry.suffix(1))
-        if(isOperator(char: lastChar)){
+        if isOperator(char: lastChar) {
             deleteLastChars(numberOfChars: 1)
         }
     }
     func isOperator(char: String) -> Bool {
         let operators = ["÷", "×", "-", "+"]
         for operatorChar in operators {
-            if(char == operatorChar){
+            if char == operatorChar {
                 return true
             }
         }
@@ -111,13 +177,13 @@ class ViewController: UIViewController {
         addCharAndPrint(char: char)
     }
     func addNumberAndPrint(char: String) {
-        if(currentEntry.count == 1 && isLastCharZero()){
+        if currentEntry.count == 1 && isLastCharZero() {
             deleteLastChars(numberOfChars: 1)
         }
         addCharAndPrint(char: char)
     }
     func isLastCharZero() -> Bool {
-        if(String(currentEntry.suffix(1)) == "0") {
+        if String(currentEntry.suffix(1)) == "0" {
             return true
         }
         return false
@@ -140,7 +206,7 @@ class ViewController: UIViewController {
         addCharAndPrint(char: ".")
     }
     @IBAction func zeroButton(_ sender: UIButton) {
-        if(currentEntry.count == 1 && isLastCharZero()){
+        if currentEntry.count == 1 && isLastCharZero() {
             return
         }
         addCharAndPrint(char: "0")
