@@ -12,21 +12,50 @@ class ViewController: UIViewController {
     @IBOutlet weak var entryField: UILabel!
     
     var result: Float = 0
-    var currentString: String = "0" //Representation of the entry field, for updating the entryField view
+    var currentEntry = "0" //Representation of the entry field, for updating the entryField view
     
     
     @IBAction func resultButton(_ sender: UIButton) {
         //TODO calculate whole string and print result
     }
     @IBAction func deleteSwipe(_ sender: UISwipeGestureRecognizer) {
-        deleteLastChar()
+        deleteLastChars(numberOfChars: 1)
         printString()
     }
     @IBAction func percentButton(_ sender: UIButton) {
-        //TODO take last number in currentString (look back for the last number all the way to the beginning or to the first previous operator, remember the position of the operator), divide it by 100 and replace (print) the number with the new value
+        var currentEntryDuplicate = currentEntry
+        var numberAsString = ""
+        
+        //TODO need to implement this as a new function which would retrieve chars of the string on which it is called
+        // (e.g. currentEntryDuplicate.getLastChars(1))
+        var lastChar = String(currentEntryDuplicate.suffix(1))
+        
+        if(!isOperator(char: lastChar)){
+            repeat {
+                numberAsString = lastChar + numberAsString
+                
+                //TODO need to implement this as a new function which would delete chars of the string on which it is called
+                // (e.g. currentEntryDuplicate.deleteLastChars(1))
+                let length = currentEntryDuplicate.count
+                currentEntryDuplicate = String(currentEntryDuplicate.prefix(length - 1))
+                
+                lastChar = String(currentEntryDuplicate.suffix(1))
+            } while (lastChar != "" && !isOperator(char: lastChar)) // Repeat until we come across an operator or to the beginning of the string
+            
+            // At this point, the number has been removed from currentEntryDuplicate, which means that the new number can just be concatenated
+            
+            if let number = Float(numberAsString) {
+                let result = number / 100
+                currentEntryDuplicate = currentEntryDuplicate + String(result)
+                currentEntry = currentEntryDuplicate
+                printString()
+            } else {
+                print("ERROR: An error occurred while calculating the percentage, the last number couldn't be cast as Float.")
+            }
+        }
     }
     @IBAction func posNegButton(_ sender: UIButton) {
-        if(currentString.prefix(1) == "-") {
+        if(currentEntry.prefix(1) == "-") {
             removeMinus()
         }
         else {
@@ -36,51 +65,59 @@ class ViewController: UIViewController {
     }
     @IBAction func clearButton(_ sender: UIButton) {
         result = 0
-        currentString = "0"
+        currentEntry = "0"
         printString()
     }
     
     
     func printString() {
-        entryField.text = currentString
+        entryField.text = currentEntry
     }
     func removeMinus() {
-        let stringLength = currentString.count
-        currentString = String(currentString.suffix(stringLength - 1))
+        let stringLength = currentEntry.count
+        currentEntry = String(currentEntry.suffix(stringLength - 1))
     }
     func addMinus() {
-        currentString = "-" + currentString
+        currentEntry = "-" + currentEntry
     }
     func addCharAndPrint(char: String) {
-        currentString = currentString + char
+        currentEntry = currentEntry + char
         printString()
     }
-    func deleteLastChar() {
-        let stringLength = currentString.count
-        currentString = String(currentString.prefix(stringLength - 1))
+    func getLastChars(numberOfChars: Int) -> String {
+        return String(currentEntry.suffix(numberOfChars))
+    }
+    func deleteLastChars(numberOfChars: Int) {
+        let stringLength = currentEntry.count
+        currentEntry = String(currentEntry.prefix(stringLength - numberOfChars))
     }
     func deleteLastCharIfOperator() {
+        let lastChar = String(currentEntry.suffix(1))
+        if(isOperator(char: lastChar)){
+            deleteLastChars(numberOfChars: 1)
+        }
+    }
+    func isOperator(char: String) -> Bool {
         let operators = ["÷", "×", "-", "+"]
-        let lastChar = currentString.suffix(1)
-        for char in operators {
-            if(char == lastChar) {
-                deleteLastChar()
-                return
+        for operatorChar in operators {
+            if(char == operatorChar){
+                return true
             }
         }
+        return false
     }
     func addOperatorAndPrint(char: String) {
         deleteLastCharIfOperator()
         addCharAndPrint(char: char)
     }
     func addNumberAndPrint(char: String) {
-        if(currentString.count == 1 && isCharZero()){
-            deleteLastChar()
+        if(currentEntry.count == 1 && isLastCharZero()){
+            deleteLastChars(numberOfChars: 1)
         }
         addCharAndPrint(char: char)
     }
-    func isCharZero() -> Bool {
-        if(String(currentString.suffix(1)) == "0") {
+    func isLastCharZero() -> Bool {
+        if(String(currentEntry.suffix(1)) == "0") {
             return true
         }
         return false
@@ -103,6 +140,9 @@ class ViewController: UIViewController {
         addCharAndPrint(char: ".")
     }
     @IBAction func zeroButton(_ sender: UIButton) {
+        if(currentEntry.count == 1 && isLastCharZero()){
+            return
+        }
         addCharAndPrint(char: "0")
     }
     @IBAction func oneButton(_ sender: UIButton) {
