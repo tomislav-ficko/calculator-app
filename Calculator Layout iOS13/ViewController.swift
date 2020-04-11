@@ -12,16 +12,23 @@ class ViewController: UIViewController {
     @IBOutlet weak var entryField: UILabel!
     
     var currentEntry = "0" //Representation of the entry field, for updating the entryField view
+    let divisionError = "Cannot divide with 0!"
     
+    enum Operator: String, CaseIterable {
+        case plus = "+"
+        case multiply = "×"
+        case minus = "-"
+        case divide = "÷"
+    }
     
     @IBAction func resultButton(_ sender: UIButton) {
-        var expressionElements: [String] = [] //backwards ordered, first element was last in entry field
+        var expressionElements: [String] = []
         var currentElement = ""
         var lastChar = ""
         
         // Parsing expression
         lastChar = String(currentEntry.suffix(1))
-        while lastChar != "" {
+        while lastChar != "" { // TODO Currently it doesn't work for negative numbers, must enable minus to be part of a number, not only an operator
             if isOperator(char: lastChar) {
                 expressionElements.append(lastChar)
                 currentEntry = deleteLastChar(string: currentEntry)
@@ -32,36 +39,96 @@ class ViewController: UIViewController {
             currentElement = lastChar + currentElement
             currentEntry = deleteLastChar(string: currentEntry)
             lastChar = getLastChar(string: currentEntry)
-            if isOperator(char: lastChar) {
+            if isOperator(char: lastChar) || lastChar == "" {
                 expressionElements.append(currentElement)
+                currentElement.removeAll()
             }
         }
         
         // Calculating expression
-        expressionElements = expressionElements.reversed()
+        expressionElements = expressionElements.reversed() // Until now, the array was ordered backwards
         currentEntry = calculateResult(array: expressionElements)
-        
+        printString()
     }
     func calculateResult (array: [String]) -> String {
-        for (index, element) in array.enumerated() {
-            if element == "×" || element == "÷" {
-                let num1 = Float(array[index - 1])!
-                let num2 = Float(array[index + 1])!
-                var result = calculate(firstNumber: num1, secondNumber: num2, operation: element)
+        var mutableArray = array
+        var tempArray: [String] = []
+        var currentOperatorIndex = 0
+        var result = ""
+        var errorFlag = false
+        
+        while true {
+            for (index, element) in mutableArray.enumerated() { //calculate multiplication and division
+                if element == Operator.multiply.rawValue || element == Operator.divide.rawValue {
+                    currentOperatorIndex = index
+                    let num1 = Float(array[currentOperatorIndex - 1])!
+                    let num2 = Float(array[currentOperatorIndex + 1])!
+                    result = calculate(firstNumber: num1, secondNumber: num2, operation: element)
+                    
+                    if result == divisionError {
+                        mutableArray.removeAll()
+                        mutableArray.append(divisionError)
+                        errorFlag = true
+                        break
+                    }
+                    
+                    for (index, element) in mutableArray.enumerated() { // After calculating the result, we have to populate a new array and insert the result value instead of the previous two numbers and operator
+                        if index == currentOperatorIndex - 1 || index == currentOperatorIndex {
+                            continue
+                        }
+                        if index == currentOperatorIndex + 1 {
+                            tempArray.append(result)
+                            continue
+                        }
+                        tempArray.append(element)
+                    }
+                    
+                    mutableArray = tempArray
+                    tempArray.removeAll()
+                }
+                
+                if element == Operator.minus.rawValue || element == Operator.plus.rawValue {
+                    currentOperatorIndex = index
+                    let num1 = Float(array[currentOperatorIndex - 1])!
+                    let num2 = Float(array[currentOperatorIndex + 1])!
+                    result = calculate(firstNumber: num1, secondNumber: num2, operation: element)
+                    
+                    for (index, element) in mutableArray.enumerated() { // After calculating the result, we have to populate a new array and insert the result value instead of the previous two numbers and operator
+                        if index == currentOperatorIndex - 1 || index == currentOperatorIndex {
+                            continue
+                        }
+                        if index == currentOperatorIndex + 1 {
+                            tempArray.append(result)
+                            continue
+                        }
+                        tempArray.append(element)
+                    }
+                    
+                    mutableArray = tempArray
+                    tempArray.removeAll()
+                }
+                
+            }
+            if errorFlag == true {
+                break
+            }
+            
+            if mutableArray.count == 1 {
+                break // Break when we reduced the array to the final result (only one element left)
             }
         }
-        //TODO
-        return ""
+        
+        return mutableArray[0]
     }
     func calculate(firstNumber: Float, secondNumber: Float, operation: String) -> String {
-        if operation == "×" {
+        if operation == Operator.multiply.rawValue {
             return String(firstNumber * secondNumber)
-        } else if operation == "÷" {
+        } else if operation == Operator.divide.rawValue {
             if secondNumber == Float(0) {
-                return "Cannot divide by 0!"
+                return divisionError
             }
             return String(firstNumber / secondNumber)
-        } else if operation == "+" {
+        } else if operation == Operator.plus.rawValue {
             return String(firstNumber + secondNumber)
         } else {
             return String(firstNumber - secondNumber)
@@ -74,11 +141,6 @@ class ViewController: UIViewController {
         let length = string.count
         return String(string.prefix(length - 1))
     }
-//    struct ParseHelper {
-//        var startingString = ""
-//        var expressionElements: [String] = []
-//
-//    }
     func isDivisionWithZero(dividend: Float, divisor: Float) -> Bool {
         if divisor == Float(0) {
             return true
@@ -122,7 +184,7 @@ class ViewController: UIViewController {
         }
     }
     @IBAction func posNegButton(_ sender: UIButton) {
-        if currentEntry.prefix(1) == "-" {
+        if currentEntry.prefix(1) == Operator.minus.rawValue {
             removeMinus()
         }
         else {
@@ -144,7 +206,7 @@ class ViewController: UIViewController {
         currentEntry = String(currentEntry.suffix(stringLength - 1))
     }
     func addMinus() {
-        currentEntry = "-" + currentEntry
+        currentEntry = Operator.minus.rawValue + currentEntry
     }
     func addCharAndPrint(char: String) {
         currentEntry = currentEntry + char
@@ -164,9 +226,8 @@ class ViewController: UIViewController {
         }
     }
     func isOperator(char: String) -> Bool {
-        let operators = ["÷", "×", "-", "+"]
-        for operatorChar in operators {
-            if char == operatorChar {
+        for operatorChar in Operator.allCases {
+            if char == operatorChar.rawValue {
                 return true
             }
         }
@@ -191,16 +252,16 @@ class ViewController: UIViewController {
     
     
     @IBAction func divideButton(_ sender: UIButton) {
-        addOperatorAndPrint(char: "÷")
+        addOperatorAndPrint(char: Operator.divide.rawValue)
     }
     @IBAction func multiplyButton(_ sender: UIButton) {
-        addOperatorAndPrint(char: "×")
+        addOperatorAndPrint(char: Operator.multiply.rawValue)
     }
     @IBAction func subtractButton(_ sender: UIButton) {
-        addOperatorAndPrint(char: "-")
+        addOperatorAndPrint(char: Operator.minus.rawValue)
     }
     @IBAction func addButton(_ sender: UIButton) {
-        addOperatorAndPrint(char: "+")
+        addOperatorAndPrint(char: Operator.plus.rawValue)
     }
     @IBAction func dotButton(_ sender: UIButton) {
         addCharAndPrint(char: ".")
